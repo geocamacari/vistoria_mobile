@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vistoria CLU - Mobile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #3b0764; /* purple-900 */
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        ::-webkit-scrollbar { display: none; }
+
+        .tab-content { display: none; animation: fadeIn 0.3s ease; }
+        .tab-content.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .nav-btn.active { color: #7e22ce; border-top: 3px solid #7e22ce; background-color: #f3e8ff; }
+        .nav-btn { border-top: 3px solid transparent; color: #6b7280; }
+
+        input, select, textarea { font-size: 16px !important; }
+
+        .preview-container {
+            width: 100%;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            background-color: #e2e8f0;
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+            border-radius: 0.5rem;
+        }
+
+        .a4-page {
+            width: 210mm;
+            min-height: 297mm;
+            background-color: #ffffff;
+            padding: 20mm;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            color: #000000;
+            transform-origin: top center; 
+        }
+
+        .pdf-content { font-size: 11pt; line-height: 1.5; text-align: justify; }
+        .image-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 10px; }
+        .image-preview { width: 100%; height: 120px; object-fit: contain; border: 1px solid #d8b4fe; border-radius: 4px; }
+
+        /* ==============================================================
+           REGRAS EXCLUSIVAS PARA IMPRESSÃO / SALVAR PDF (MOBILE NATIVO)
+           ============================================================== */
+        @media print {
+            @page { size: A4 portrait; margin: 0; }
+            body { background-color: white !important; }
+            
+            /* Esconde todos os elementos da UI */
+            header, nav, .next-tab-btn, #floating-actions, .text-xs.text-center.text-gray-500 { 
+                display: none !important; 
+            }
+            
+            /* Remove margins e paddings do app */
+            main { padding: 0 !important; margin: 0 !important; }
+            
+            /* Garante que só o Tab 3 seja impresso, mesmo se estiver em outra aba */
+            #tab-1, #tab-2 { display: none !important; }
+            #tab-3 { display: block !important; padding: 0 !important; }
+            
+            /* Remove a escala mobile do A4 para ele ficar 100% na impressão */
+            .preview-container { padding: 0 !important; background: transparent !important; height: auto !important; }
+            .a4-page {
+                transform: none !important;
+                box-shadow: none !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 20mm !important; /* Mantém apenas a margem interna do texto (papel timbrado) */
+            }
+            
+            /* Força as cores de fundo aparecerem no PDF (bg-gray, textos roxos, etc) */
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-20">
+
+    <!-- Header -->
+    <header class="fixed top-0 w-full bg-purple-800 text-white p-4 shadow-md z-50 flex items-center justify-between">
+        <h1 class="font-bold text-lg leading-tight">Relatório de Vistoria<br><span class="text-xs font-normal text-purple-200">CLU / SEDUR Camaçari</span></h1>
+    </header>
+
+    <main class="pt-20 px-4">
+        <form id="vistoria-form">
+            <!-- ABA 1: DADOS -->
+            <div id="tab-1" class="tab-content active space-y-5 pb-6">
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                    <h2 class="font-bold text-purple-700 text-base mb-3 flex items-center gap-2">
+                        <span class="bg-purple-100 p-1 rounded">1</span> Dados do Processo
+                    </h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block font-semibold text-gray-700 text-sm mb-1">Número do Processo</label>
+                            <input type="text" id="proc-numero" class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-purple-600 outline-none" placeholder="Ex: 00089.22...">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-gray-700 text-sm mb-1">Data da Vistoria</label>
+                            <input type="date" id="proc-data" class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-purple-600 outline-none">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-gray-700 text-sm mb-1">Interessado(a)</label>
+                            <input type="text" id="proc-interessado" class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-purple-600 outline-none">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-gray-700 text-sm mb-1">Endereço / Local</label>
+                            <textarea id="proc-local" rows="2" class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-purple-600 outline-none"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                    <h2 class="font-bold text-purple-700 text-base mb-3 flex items-center gap-2">
+                        <span class="bg-purple-100 p-1 rounded">2</span> Zoneamento e Localização
+                    </h2>
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block font-semibold text-gray-700 text-xs mb-1">Nº do Alvará</label>
+                                <input type="text" id="alvara-numero" class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 outline-none" placeholder="00.2026">
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-gray-700 text-xs mb-1">Data do Alvará</label>
+                                <input type="date" id="alvara-data" class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 outline-none">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block font-semibold text-gray-700 text-sm mb-1">Macrozona</label>
+                            <select id="macrozona-select" class="w-full p-3 border border-purple-300 rounded-lg bg-purple-50 text-purple-900 font-medium outline-none">
+                                <option value="">-- Selecione --</option>
+                                <option value="Macrozona Urbana">Macrozona Urbana (MU)</option>
+                                <option value="Macrozona Rural">Macrozona Rural (MR)</option>
+                                <option value="Macrozona Industrial">Macrozona Industrial (MI)</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block font-semibold text-gray-700 text-sm mb-1">Zona Urbanística</label>
+                            <select id="zone-select" class="w-full p-3 border border-purple-300 rounded-lg bg-purple-50 text-purple-900 font-medium outline-none">
+                                <option value="">-- Selecione a Zona --</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block font-semibold text-gray-700 text-sm mb-1">Uso do Solo</label>
+                            <select id="use-select" disabled class="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 font-medium outline-none">
+                                <option value="">-- Aguardando Zona --</option>
+                            </select>
+                        </div>
+
+                        <div class="bg-purple-100 p-3 rounded-lg border border-purple-200 mt-2">
+                            <label class="block font-bold text-purple-800 text-sm mb-2 text-center">Capturar Coordenadas</label>
+                            <button type="button" id="btn-gps" class="w-full bg-purple-600 active:bg-purple-800 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 mb-3 shadow">
+                                Usar Meu GPS Atual
+                            </button>
+                            <div class="flex gap-2">
+                                <input type="text" id="input-maps" class="flex-1 p-2 border border-purple-300 rounded bg-white text-xs" placeholder="Colar Lat/Lon">
+                                <button type="button" id="btn-converter-maps" class="bg-purple-500 text-white font-bold py-2 px-3 rounded text-xs shadow">Converter</button>
+                            </div>
+                            <p id="msg-coord" class="text-xs font-semibold text-center mt-2 hidden"></p>
+
+                            <div class="grid grid-cols-2 gap-2 mt-3">
+                                <div>
+                                    <label class="block text-xs font-bold text-purple-800 mb-1">UTM - E (X)</label>
+                                    <input type="text" id="coord-e" class="w-full p-2 border border-purple-300 rounded bg-white text-sm font-bold outline-none" readonly>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-purple-800 mb-1">UTM - N (Y)</label>
+                                    <input type="text" id="coord-n" class="w-full p-2 border border-purple-300 rounded bg-white text-sm font-bold outline-none" readonly>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" class="w-full py-4 bg-gray-800 text-white font-bold rounded-xl shadow-lg next-tab-btn" data-target="tab-2">
+                    Avançar para Vistoria ➔
+                </button>
+            </div>
+
+            <!-- ABA 2: VISTORIA -->
+            <div id="tab-2" class="tab-content space-y-5 pb-6">
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                    <h2 class="font-bold text-purple-700 text-base mb-3 flex items-center gap-2">
+                        <span class="bg-purple-100 p-1 rounded">3</span> Medição de Recuos Existentes
+                    </h2>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-gray-50 p-2 rounded border border-gray-200">
+                            <label class="block font-semibold text-gray-700 text-xs mb-1">Frontal (m)</label>
+                            <input type="number" step="0.01" id="recuo-frontal" class="w-full p-2 border border-gray-300 rounded outline-none font-bold text-center">
+                            <span id="req-frontal" class="text-[10px] font-bold text-gray-500 block mt-1 text-center">Exigido: -</span>
+                        </div>
+                        <div class="bg-gray-50 p-2 rounded border border-gray-200">
+                            <label class="block font-semibold text-gray-700 text-xs mb-1">Fundo (m)</label>
+                            <input type="number" step="0.01" id="recuo-fundo" class="w-full p-2 border border-gray-300 rounded outline-none font-bold text-center">
+                            <span id="req-fundo" class="text-[10px] font-bold text-gray-500 block mt-1 text-center">Exigido: -</span>
+                        </div>
+                        <div class="bg-gray-50 p-2 rounded border border-gray-200">
+                            <label class="block font-semibold text-gray-700 text-xs mb-1">Lat. Dir. (m)</label>
+                            <input type="number" step="0.01" id="recuo-lat-dir" class="w-full p-2 border border-gray-300 rounded outline-none font-bold text-center">
+                            <span id="req-lat-dir" class="text-[10px] font-bold text-gray-500 block mt-1 text-center">Exigido: -</span>
+                        </div>
+                        <div class="bg-gray-50 p-2 rounded border border-gray-200">
+                            <label class="block font-semibold text-gray-700 text-xs mb-1">Lat. Esq. (m)</label>
+                            <input type="number" step="0.01" id="recuo-lat-esq" class="w-full p-2 border border-gray-300 rounded outline-none font-bold text-center">
+                            <span id="req-lat-esq" class="text-[10px] font-bold text-gray-500 block mt-1 text-center">Exigido: -</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                    <h2 class="font-bold text-purple-700 text-base mb-3 flex items-center gap-2">
+                        <span class="bg-purple-100 p-1 rounded">4</span> Conclusão
+                    </h2>
+                    <select id="status-conclusao" class="w-full p-3 border border-purple-300 rounded-lg bg-purple-50 text-purple-900 font-bold mb-4 outline-none">
+                        <option value="ATENDE">ATENDE aos parâmetros</option>
+                        <option value="NAO_ATENDE">NÃO ATENDE aos parâmetros</option>
+                    </select>
+
+                    <label class="flex items-start text-sm font-semibold text-gray-700 cursor-pointer bg-gray-50 p-3 rounded-lg border border-gray-200">
+                        <input type="checkbox" id="check-docs-comp" class="mt-0.5 mr-3 w-5 h-5 accent-purple-600 rounded">
+                        <span>Exigir documentos complementares</span>
+                    </label>
+
+                    <div id="pendencias-container" class="hidden mt-3 bg-purple-50 p-3 rounded-lg border border-purple-200">
+                        <label class="block font-bold text-purple-800 text-xs mb-2">Selecione as Pendências:</label>
+                        <div class="space-y-2">
+                            <label class="flex items-center text-sm font-medium text-gray-800"><input type="checkbox" value="Certidão Negativa de Débitos - CND atualizada" class="mr-2 w-4 h-4 pendencia-cb accent-purple-600"> CND Atualizada</label>
+                            <label class="flex items-center text-sm font-medium text-gray-800"><input type="checkbox" value="Certidão de Ônus em nome do proprietário" class="mr-2 w-4 h-4 pendencia-cb accent-purple-600"> Certidão de Ônus</label>
+                            <label class="flex items-center text-sm font-medium text-gray-800"><input type="checkbox" value="ART/RRT de execução regularizada" class="mr-2 w-4 h-4 pendencia-cb accent-purple-600"> ART/RRT de Execução</label>
+                            <label class="flex items-center text-sm font-medium text-gray-800"><input type="checkbox" value="Outros:" class="mr-2 w-4 h-4 pendencia-cb accent-purple-600" id="check-outros"> Outros (especificar)</label>
+                        </div>
+                        <input type="text" id="outras-pendencias" class="w-full mt-2 p-2 border border-purple-300 rounded bg-white text-sm hidden" placeholder="Digite a pendência...">
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                    <h2 class="font-bold text-purple-700 text-base mb-3 flex items-center gap-2">
+                        <span class="bg-purple-100 p-1 rounded">5</span> Fotos e Analista
+                    </h2>
+                    <div class="mb-4">
+                        <label class="flex flex-col items-center justify-center w-full h-24 border-2 border-purple-300 border-dashed rounded-lg cursor-pointer bg-purple-50 active:bg-purple-100">
+                            <p class="text-sm text-purple-800 font-bold">📸 Tirar Foto ou Anexar</p>
+                            <input id="foto-upload" type="file" multiple accept="image/*" class="hidden" />
+                        </label>
+                        <p class="text-xs text-center text-gray-500 mt-1" id="foto-count">Nenhuma foto selecionada</p>
+                    </div>
+                    <div class="space-y-3 mt-4">
+                        <div>
+                            <label class="block font-semibold text-gray-700 text-sm mb-1">Nome do(a) Analista</label>
+                            <input type="text" id="analista-nome" class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 outline-none">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-gray-700 text-sm mb-1">Matrícula</label>
+                            <input type="tel" id="analista-matricula" class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex gap-2">
+                    <button type="button" class="w-1/3 py-4 bg-gray-200 text-gray-700 font-bold rounded-xl shadow next-tab-btn" data-target="tab-1">Voltar</button>
+                    <button type="button" class="w-2/3 py-4 bg-purple-600 text-white font-bold rounded-xl shadow-lg next-tab-btn" data-target="tab-3">Ver Relatório ➔</button>
+                </div>
+            </div>
+
+            <!-- ABA 3: PREVIEW E GERAÇÃO -->
+            <div id="tab-3" class="tab-content space-y-4 pb-6">
+                <!-- Ações Flutuantes (Escondidas na Impressão via CSS) -->
+                <div id="floating-actions" class="grid grid-cols-2 gap-3 mb-4 sticky top-[72px] z-40 bg-[#f8fafc] py-2 border-b border-gray-200">
+                    <button type="button" id="btn-gerar-pdf" class="w-full py-3 bg-purple-700 active:bg-purple-900 text-white font-bold rounded-xl shadow flex justify-center items-center gap-2 text-sm">
+                        🖨️ Imprimir / PDF
+                    </button>
+                    <button type="button" id="btn-link" class="w-full py-3 bg-indigo-100 active:bg-indigo-200 text-indigo-800 font-bold rounded-xl shadow flex justify-center items-center gap-2 text-sm border border-indigo-200">
+                        🔗 Compartilhar
+                    </button>
+                </div>
+
+                <p class="text-xs text-center text-gray-500 mb-2">Visualização do documento final (WYSIWYG)</p>
+                
+                <div class="preview-container" id="scale-container">
+                    <div id="documento-preview" class="a4-page">
+                        <div class="pdf-content">
+                            <div class="text-center font-bold mb-6 border-b-2 border-black pb-4 text-black text-sm">
+                                <p>ESTADO DA BAHIA</p>
+                                <p>PREFEITURA MUNICIPAL DE CAMAÇARI</p>
+                                <p>SECRETARIA DE DESENVOLVIMENTO URBANO E MEIO AMBIENTE - SEDUR</p>
+                                <p>DIRETORIA DE URBANISMO - DIRURB</p>
+                                <p>COORDENADORIA LICENCIAMENTO URBANÍSTICO - CLU</p>
+                            </div>
+
+                            <h2 class="text-center font-bold text-lg mb-6" style="color: #4c1d95;">RELATÓRIO DE VISTORIA - <span id="prev-data-titulo" class="uppercase">DD/MM/AAAA</span></h2>
+
+                            <div class="mb-5">
+                                <h3 class="font-bold text-sm mb-2" style="color: #6b21a8; border-bottom: 1px solid #d8b4fe;">DADOS DO PROCESSO</h3>
+                                <p><strong>NÚMERO:</strong> <span id="prev-proc">...</span></p>
+                                <p><strong>INTERESSADO(A):</strong> <span id="prev-interessado" class="uppercase">...</span></p>
+                                <p><strong>ASSUNTO:</strong> ALVARÁ DE HABITE-SE</p>
+                                <p><strong>LOCAL:</strong> <span id="prev-local">...</span></p>
+                            </div>
+
+                            <div class="mb-5">
+                                <h3 class="font-bold text-sm mb-2" style="color: #6b21a8; border-bottom: 1px solid #d8b4fe;">1. OBJETIVO</h3>
+                                <p>
+                                    Vistoriar edificação <span id="prev-uso-texto" class="lowercase font-bold">...</span>, localizada no endereço supracitado, para verificar a situação da obra, com a finalidade de obter o Alvará de Habite-se. 
+                                    A edificação possui Alvará de Construção nº <span id="prev-alv-num" class="font-bold">...</span>, emitido em <span id="prev-alv-data" class="font-bold">...</span>. 
+                                    A edificação se encontra localizada na <span id="prev-macrozona" class="font-bold">...</span>, na zona <span id="prev-zona" class="font-bold">...</span> <span id="prev-zona-extenso" class="font-bold"></span>. 
+                                    Coordenadas UTM: E: <span id="prev-coord-e">...</span>, N: <span id="prev-coord-n">...</span>.
+                                </p>
+                            </div>
+
+                            <div class="mb-5">
+                                <h3 class="font-bold text-sm mb-2" style="color: #6b21a8; border-bottom: 1px solid #d8b4fe;">2. SITUAÇÃO EXISTENTE</h3>
+                                <p>Conforme vistoria, identificou-se que a obra se encontra concluída com as informações abaixo (Recuos Apurados):</p>
+                                <p class="mt-2 font-bold text-center bg-gray-100 p-2 border border-gray-300 text-sm">
+                                    Frontal: <span id="prev-rf">0.00</span>m | Lat. Dir: <span id="prev-rld">0.00</span>m | Lat. Esq: <span id="prev-rle">0.00</span>m | Fundo: <span id="prev-rfd">0.00</span>m
+                                </p>
+                            </div>
+
+                            <div class="mb-5">
+                                <h3 class="font-bold text-sm mb-2" style="color: #6b21a8; border-bottom: 1px solid #d8b4fe;">3. CONCLUSÃO</h3>
+                                <p>
+                                    Após a vistoria realizada em <span id="prev-data-conclusao">DD/MM/AAAA</span> e a análise das informações, informamos que a obra <strong id="prev-status-texto" class="uppercase">...</strong> aos parâmetros estabelecidos.
+                                </p>
+                                <div id="prev-pendencias-bloco" class="hidden mt-2">
+                                    <p class="mb-1 text-sm font-semibold">Necessidade de apresentar documentos complementares:</p>
+                                    <ul id="prev-pendencias-lista" class="list-disc list-inside pl-2 text-sm font-bold" style="color: #4c1d95;"></ul>
+                                </div>
+                            </div>
+
+                            <div class="mb-5">
+                                <h3 class="font-bold text-sm mb-2" style="color: #6b21a8; border-bottom: 1px solid #d8b4fe;">4. FOTOS DA VISTORIA</h3>
+                                <div id="prev-fotos" class="image-grid"></div>
+                                <p id="prev-nofotos" class="text-sm italic text-gray-500">Nenhuma foto anexada.</p>
+                            </div>
+
+                            <div class="mt-12 text-center text-sm">
+                                <p>Camaçari, <span id="prev-data-extenso">DD de Mês de AAAA</span></p>
+                                <p class="mt-8 font-bold border-t border-black inline-block pt-2 px-6">
+                                    <span id="prev-analista-nome" class="uppercase">NOME DO ANALISTA</span><br>
+                                    <span class="font-normal text-xs">Matrícula: <span id="prev-analista-mat">...</span> / CLU</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </main>
+
+    <!-- Bottom Nav -->
+    <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 flex justify-between z-50 pb-safe">
+        <button class="nav-btn active flex-1 py-3 font-semibold text-xs" data-target="tab-1">1. Dados</button>
+        <button class="nav-btn flex-1 py-3 font-semibold text-xs border-l border-gray-100" data-target="tab-2">2. Vistoria</button>
+        <button class="nav-btn flex-1 py-3 font-semibold text-xs border-l border-gray-100" data-target="tab-3">3. Relatório</button>
+    </nav>
+
+    <script>
+        // Lógica de Abas
+        const navBtns = document.querySelectorAll('.nav-btn, .next-tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        function switchTab(targetId) {
+            tabContents.forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(targetId).classList.add('active');
+            
+            const activeNavBtn = document.querySelector(`.nav-btn[data-target="${targetId}"]`);
+            if(activeNavBtn) activeNavBtn.classList.add('active');
+
+            if(targetId === 'tab-3') {
+                updatePreview();
+                adjustScale();
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        navBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const targetId = e.currentTarget.getAttribute('data-target');
+                if(targetId) switchTab(targetId);
+            });
+        });
+
+        // Escala
+        function adjustScale() {
+            const container = document.getElementById('scale-container');
+            const page = document.getElementById('documento-preview');
+            const containerWidth = container.clientWidth - 32;
+            const a4WidthPx = 794; 
+            
+            let scale = containerWidth / a4WidthPx;
+            if(scale > 1) scale = 1;
+
+            page.style.transform = `scale(${scale})`;
+            container.style.height = `${(1122 * scale) + 40}px`;
+        }
+
+        window.addEventListener('resize', () => {
+            if(document.getElementById('tab-3').classList.contains('active')) adjustScale();
+        });
+
+        proj4.defs("EPSG:4326", "+proj=longlat +datum=WGS84 +no_defs");
+        proj4.defs("EPSG:32724", "+proj=utm +zone=24 +south +datum=WGS84 +units=m +no_defs");
+
+        // Base de Dados Urbanísticos (COMPLETA DO ARQUIVO ORIGINAL)
+        const urbanData = [
+            { "ZONA": "ZDC 1", "USOS": "UNIRESIDENCIAL", "RECUO FRENTE (m)": "6,00", "RECUO LATERAL (m)": "3,00", "RECUO FUNDO (m)": "5,00" },
+            { "ZONA": "ZDC 1", "USOS": "PLURIRESIDENCIAL", "RECUO FRENTE (m)": "6,00", "RECUO LATERAL (m)": "3,00", "RECUO FUNDO (m)": "5,00" },
+            { "ZONA": "ZDC 1", "USOS": "COMÉRCIO, SERVIÇO, INSTITUCIONAL", "RECUO FRENTE (m)": "6,00", "RECUO LATERAL (m)": "3,00", "RECUO FUNDO (m)": "5,00" },
+            { "ZONA": "ZDC 1", "USOS": "INDUSTRIAL", "RECUO FRENTE (m)": "6,00", "RECUO LATERAL (m)": "3,00", "RECUO FUNDO (m)": "5,00" },
+            { "ZONA": "ZDC 2", "USOS": "UNIRESIDENCIAL", "RECUO FRENTE (m)": "8,00", "RECUO LATERAL (m)": "2,50", "RECUO FUNDO (m)": "3,00" },
+            { "ZONA": "ZDC 3", "USOS": "UNIRESIDENCIAL", "RECUO FRENTE (m)": "8,00", "RECUO LATERAL (m)": "2,00", "RECUO FUNDO (m)": "2,00" },
+            { "ZONA": "ZDC 4", "USOS": "UNIRESIDENCIAL", "RECUO FRENTE (m)": "5,00", "RECUO LATERAL (m)": "1,50", "RECUO FUNDO (m)": "1,50" },
+            { "ZONA": "ZDC 5", "USOS": "UNIRESIDENCIAL", "RECUO FRENTE (m)": "5,00", "RECUO LATERAL (m)": "1,50", "RECUO FUNDO (m)": "2,00" },
+            { "ZONA": "ZOC 1", "USOS": "UNIRESIDENCIAL", "RECUO FRENTE (m)": "8,00", "RECUO LATERAL (m)": "2,50", "RECUO FUNDO (m)": "3,00" },
+            { "ZONA": "ZOC 2", "USOS": "UNIRESIDENCIAL", "RECUO FRENTE (m)": "5,00", "RECUO LATERAL (m)": "2,00", "RECUO FUNDO (m)": "2,00" },
+            { "ZONA": "ZOC 3", "USOS": "UNIRESIDENCIAL", "RECUO FRENTE (m)": "5,00", "RECUO LATERAL (m)": "1,50", "RECUO FUNDO (m)": "2,00" },
+            { "ZONA": "ZOC 4", "USOS": "UNIRESIDENCIAL", "RECUO FRENTE (m)": "5,00", "RECUO LATERAL (m)": "1,50", "RECUO FUNDO (m)": "2,00" },
+            { "ZONA": "ZE 1", "USOS": "UNIRESIDENCIAL", "RECUO FRENTE (m)": "2,50", "RECUO LATERAL (m)": "1,50", "RECUO FUNDO (m)": "1,50" },
+            { "ZONA": "ZEIS 1", "USOS": "UNIRESIDENCIAL", "RECUO FRENTE (m)": "2,50", "RECUO LATERAL (m)": "1,50", "RECUO FUNDO (m)": "1,50" },
+            { "ZONA": "ZOUC 1", "USOS": "UNIRESIDENCIAL", "RECUO FRENTE (m)": "2,50", "RECUO LATERAL (m)": "1,50", "RECUO FUNDO (m)": "1,50" },
+            { "ZONA": "ZAICS 1", "USOS": "COMÉRCIO, SERVIÇO, INSTITUCIONAL", "RECUO FRENTE (m)": "7,50", "RECUO LATERAL (m)": "2,00", "RECUO FUNDO (m)": "2,00" },
+            { "ZONA": "CeLin 1 - BA099 - ESTRADA DO COCO", "USOS": "PLURIRESIDENCIAL", "RECUO FRENTE (m)": "10 m após a faixa de dominio", "RECUO LATERAL (m)": "3,00", "RECUO FUNDO (m)": "3,00" }
+        ];
+
+        let selectedUrbanData = null;
+
+        // Tradução Extenso (Original)
+        function getZonaExtenso(zonaStr) {
+            if (!zonaStr) return "";
+            if (zonaStr.startsWith("ZOUC")) return "(Zona Urbana Consolidada)";
+            if (zonaStr.startsWith("ZEIS")) return "(Zona Especial de Interesse Social)";
+            if (zonaStr.startsWith("ZE ")) return "(Zona de Expansão)";
+            if (zonaStr.startsWith("ZDC")) return "(Zona de Desenvolvimento da Costa)";
+            if (zonaStr.startsWith("ZOC")) return "(Zona de Ocupação)";
+            if (zonaStr.startsWith("ZAICS")) return "(Zona de Apoio à Indústria, Comércio e Serviços)";
+            if (zonaStr.startsWith("ZUE")) return "(Zonas de Usos Especiais)";
+            if (zonaStr.startsWith("ZPIC")) return "(Zona Polo Industrial de Camaçari)";
+            if (zonaStr.startsWith("CeLin")) return "(Centralidade Linear)";
+            if (zonaStr === "ZONA RURAL") return "";
+            return "";
+        }
+
+        function formatDataBR(dataIso) {
+            if(!dataIso) return "...";
+            const [y, m, d] = dataIso.split('-');
+            return `${d}/${m}/${y}`;
+        }
+        function formatDataExtenso(dataIso) {
+            if(!dataIso) return "DD de Mês de AAAA";
+            const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+            const [y, m, d] = dataIso.split('-');
+            return `${d} de ${meses[parseInt(m)-1]} de ${y}`;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const macrozonaSelect = document.getElementById('macrozona-select');
+            const zoneSelect = document.getElementById('zone-select');
+            const useSelect = document.getElementById('use-select');
+            const form = document.getElementById('vistoria-form');
+            const imageInput = document.getElementById('foto-upload');
+            
+            // Popula Zonas (Lista Completa do Original)
+            const todasAsZonas = ["ZDC 1", "ZDC 2", "ZDC 3", "ZDC 4", "ZDC 5", "ZOC 1", "ZOC 2", "ZOC 3", "ZOC 4", "ZE 1", "ZE 2", "ZE 3", "ZOUC 1", "ZOUC 2", "ZAICS 1", "ZAICS 2", "ZUE 1", "ZUE 2", "ZUE 3", "ZUE 4", "ZONA RURAL", "ZEIS 1", "ZEIS 2", "ZEIS 3", "ZEIS 4", "ZEIS 5", "CeLin 1 - BA099 - ESTRADA DO COCO", "CeLin 2 - VIA METROPOLITANA"];
+            todasAsZonas.forEach(z => zoneSelect.add(new Option(z, z)));
+
+            const usosComuns = ["UNIRESIDENCIAL", "PLURIRESIDENCIAL", "COMÉRCIO, SERVIÇO, INSTITUCIONAL", "INDUSTRIAL", "EMPREENDIMENTO TURÍSTICO"];
+
+            zoneSelect.addEventListener('change', (e) => {
+                useSelect.innerHTML = '<option value="">-- Selecione o Uso --</option>';
+                if (e.target.value) {
+                    usosComuns.forEach(u => useSelect.add(new Option(u, u)));
+                    useSelect.disabled = false;
+                    useSelect.classList.remove('bg-gray-100', 'text-gray-500');
+                    useSelect.classList.add('bg-purple-50', 'text-purple-900');
+                } else {
+                    useSelect.disabled = true;
+                    useSelect.classList.add('bg-gray-100', 'text-gray-500');
+                }
+                updatePreview();
+            });
+
+            useSelect.addEventListener('change', () => {
+                const z = zoneSelect.value;
+                const u = useSelect.value;
+                selectedUrbanData = urbanData.find(item => item.ZONA === z && item.USOS === u);
+                updatePreview();
+            });
+
+            // GPS e Maps
+            document.getElementById('btn-gps').addEventListener('click', () => {
+                const msgEl = document.getElementById('msg-coord');
+                msgEl.classList.remove('hidden');
+                msgEl.textContent = "Aguarde, obtendo GPS...";
+                msgEl.className = "text-xs font-semibold text-center mt-2 text-yellow-600";
+                
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition((position) => {
+                        converterEPreencher(position.coords.latitude, position.coords.longitude, msgEl);
+                    }, () => {
+                        msgEl.textContent = "Erro: Permissão negada ou GPS inativo.";
+                        msgEl.className = "text-xs font-semibold text-center mt-2 text-red-600";
+                    }, { enableHighAccuracy: true });
+                }
+            });
+
+            document.getElementById('btn-converter-maps').addEventListener('click', () => {
+                const inputVal = document.getElementById('input-maps').value;
+                const msgEl = document.getElementById('msg-coord');
+                msgEl.classList.remove('hidden');
+                const match = inputVal.match(/(-?\d+\.\d+)[\s,]+(-?\d+\.\d+)/);
+
+                if (match) {
+                    converterEPreencher(parseFloat(match[1]), parseFloat(match[2]), msgEl);
+                } else {
+                    msgEl.textContent = "Formato inválido. Cole Lat/Lon.";
+                    msgEl.className = "text-xs font-semibold text-center mt-2 text-red-600";
+                }
+            });
+
+            function converterEPreencher(lat, lon, msgEl) {
+                try {
+                    const coordsUtm = proj4("EPSG:4326", "EPSG:32724", [lon, lat]);
+                    document.getElementById('coord-e').value = coordsUtm[0].toFixed(2);
+                    document.getElementById('coord-n').value = coordsUtm[1].toFixed(2);
+                    msgEl.textContent = `Lat ${lat.toFixed(4)}, Lon ${lon.toFixed(4)}`;
+                    msgEl.className = "text-[10px] font-semibold text-center mt-2 text-green-700 bg-green-100 p-1 rounded";
+                    updatePreview();
+                } catch(e) {
+                    msgEl.textContent = "Erro matemático na conversão.";
+                }
+            }
+
+            document.getElementById('check-docs-comp').addEventListener('change', (e) => {
+                document.getElementById('pendencias-container').classList.toggle('hidden', !e.target.checked);
+                updatePreview();
+            });
+
+            document.getElementById('check-outros').addEventListener('change', (e) => {
+                document.getElementById('outras-pendencias').classList.toggle('hidden', !e.target.checked);
+                updatePreview();
+            });
+
+            // Upload Fotos
+            imageInput.addEventListener('change', (e) => {
+                const files = Array.from(e.target.files).slice(0, 4);
+                const container = document.getElementById('prev-fotos');
+                const msg = document.getElementById('prev-nofotos');
+                const countMsg = document.getElementById('foto-count');
+                
+                container.innerHTML = '';
+                if(files.length > 0) {
+                    msg.classList.add('hidden');
+                    countMsg.textContent = `${files.length} foto(s) anexada(s)`;
+                    countMsg.classList.add('text-green-600', 'font-bold');
+                } else {
+                    msg.classList.remove('hidden');
+                    countMsg.textContent = `Nenhuma foto selecionada`;
+                    countMsg.classList.remove('text-green-600', 'font-bold');
+                }
+
+                files.forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const img = document.createElement('img');
+                        img.src = event.target.result;
+                        img.className = 'image-preview';
+                        container.appendChild(img);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            });
+
+            form.addEventListener('input', updatePreview);
+
+            // Validação de Recuos ajustada para tratar textos (ex: "10m após a faixa")
+            function validarRecuo(idInput, idReq, valReqStr) {
+                const elInput = document.getElementById(idInput);
+                const elReq = document.getElementById(idReq);
+                if(!selectedUrbanData || !valReqStr) {
+                    elReq.textContent = "Exigido: -";
+                    elInput.className = "w-full p-2 border border-gray-300 rounded outline-none font-bold text-center";
+                    return;
+                }
+
+                const valInput = parseFloat(elInput.value);
+                const valReqNumerico = parseFloat(valReqStr.replace(',', '.'));
+
+                if(isNaN(valReqNumerico)) {
+                    // É um texto, não dá pra validar com menor/maior
+                    elReq.innerHTML = `Exigido: ${valReqStr}`;
+                    elReq.className = "text-[10px] font-bold text-blue-600 block mt-1 text-center";
+                    elInput.className = "w-full p-2 border border-blue-400 rounded bg-blue-50 text-blue-900 outline-none font-bold text-center";
+                } else if(!isNaN(valInput)) {
+                    if(valInput < valReqNumerico) {
+                        elInput.className = "w-full p-2 border-2 border-red-500 rounded bg-red-50 text-red-700 outline-none font-bold text-center";
+                        elReq.innerHTML = `Mín.: ${valReqStr}m 🔴`;
+                        elReq.className = "text-[10px] font-bold text-red-600 block mt-1 text-center";
+                    } else {
+                        elInput.className = "w-full p-2 border-2 border-green-500 rounded bg-green-50 text-green-700 outline-none font-bold text-center";
+                        elReq.innerHTML = `Mín.: ${valReqStr}m 🟢`;
+                        elReq.className = "text-[10px] font-bold text-green-600 block mt-1 text-center";
+                    }
+                } else {
+                    elReq.innerHTML = `Exigido: ${valReqStr}m`;
+                    elReq.className = "text-[10px] font-bold text-gray-500 block mt-1 text-center";
+                    elInput.className = "w-full p-2 border border-gray-300 rounded outline-none font-bold text-center";
+                }
+            }
+
+            function updatePreview() {
+                validarRecuo('recuo-frontal', 'req-frontal', selectedUrbanData ? selectedUrbanData['RECUO FRENTE (m)'] : null);
+                validarRecuo('recuo-fundo', 'req-fundo', selectedUrbanData ? selectedUrbanData['RECUO FUNDO (m)'] : null);
+                validarRecuo('recuo-lat-dir', 'req-lat-dir', selectedUrbanData ? selectedUrbanData['RECUO LATERAL (m)'] : null);
+                validarRecuo('recuo-lat-esq', 'req-lat-esq', selectedUrbanData ? selectedUrbanData['RECUO LATERAL (m)'] : null);
+
+                const setText = (idSource, idTarget, fallback = '...') => {
+                    document.getElementById(idTarget).textContent = document.getElementById(idSource).value || fallback;
+                };
+
+                setText('proc-numero', 'prev-proc');
+                setText('proc-interessado', 'prev-interessado');
+                setText('proc-local', 'prev-local');
+                setText('alvara-numero', 'prev-alv-num');
+                setText('coord-e', 'prev-coord-e');
+                setText('coord-n', 'prev-coord-n');
+                setText('macrozona-select', 'prev-macrozona');
+                
+                const selectedZ = document.getElementById('zone-select').value;
+                document.getElementById('prev-zona').textContent = selectedZ || '...';
+                document.getElementById('prev-zona-extenso').textContent = getZonaExtenso(selectedZ);
+                
+                setText('use-select', 'prev-uso-texto');
+                setText('recuo-frontal', 'prev-rf', '0.00');
+                setText('recuo-fundo', 'prev-rfd', '0.00');
+                setText('recuo-lat-dir', 'prev-rld', '0.00');
+                setText('recuo-lat-esq', 'prev-rle', '0.00');
+                setText('analista-nome', 'prev-analista-nome', 'NOME DO ANALISTA');
+                setText('analista-matricula', 'prev-analista-mat');
+
+                const d = document.getElementById('proc-data').value;
+                document.getElementById('prev-data-titulo').textContent = formatDataBR(d);
+                document.getElementById('prev-data-conclusao').textContent = formatDataBR(d);
+                document.getElementById('prev-data-extenso').textContent = formatDataExtenso(d);
+                document.getElementById('prev-alv-data').textContent = formatDataBR(document.getElementById('alvara-data').value);
+
+                const isAtende = document.getElementById('status-conclusao').value === 'ATENDE';
+                const hasExig = document.getElementById('check-docs-comp').checked;
+                const txtStatus = document.getElementById('prev-status-texto');
+                const blocoPend = document.getElementById('prev-pendencias-bloco');
+                const listaPend = document.getElementById('prev-pendencias-lista');
+
+                if(isAtende && !hasExig) {
+                    txtStatus.textContent = 'ATENDE'; txtStatus.className = 'text-green-700 uppercase';
+                    blocoPend.classList.add('hidden');
+                } else if(isAtende && hasExig) {
+                    txtStatus.textContent = 'ATENDE (COM EXIGÊNCIAS)'; txtStatus.className = 'text-yellow-700 uppercase';
+                    blocoPend.classList.remove('hidden');
+                } else {
+                    txtStatus.textContent = 'NÃO ATENDE'; txtStatus.className = 'text-red-700 uppercase';
+                    blocoPend.classList.toggle('hidden', !hasExig);
+                }
+
+                listaPend.innerHTML = '';
+                document.querySelectorAll('.pendencia-cb:checked').forEach(cb => {
+                    let t = cb.value;
+                    if(t === 'Outros:') t = document.getElementById('outras-pendencias').value || 'Não especificado';
+                    listaPend.insertAdjacentHTML('beforeend', `<li>${t}</li>`);
+                });
+            }
+
+            // NOVA FORMA DE IMPRESSÃO (Nativa do Sistema Operacional - Perfeita para Mobile)
+            document.getElementById('btn-gerar-pdf').addEventListener('click', () => {
+                // A magia acontece no CSS @media print
+                window.print();
+            });
+
+            // Compartilhar Nativo
+            document.getElementById('btn-link').addEventListener('click', async () => {
+                const state = {
+                    p_num: document.getElementById('proc-numero').value,
+                    p_data: document.getElementById('proc-data').value,
+                    p_int: document.getElementById('proc-interessado').value
+                };
+                const shareableUrl = window.location.origin + window.location.pathname + '?d=' + btoa(encodeURIComponent(JSON.stringify(state)));
+                
+                if (navigator.share) {
+                    try {
+                        await navigator.share({
+                            title: 'Relatório de Vistoria',
+                            text: `Acesse o rascunho da vistoria de ${state.p_int || 'processo'}:`,
+                            url: shareableUrl
+                        });
+                    } catch (err) {}
+                } else {
+                    navigator.clipboard.writeText(shareableUrl).then(() => alert('Link copiado!'));
+                }
+            });
+
+            // Load inicial de Dados
+            const dataParam = new URLSearchParams(window.location.search).get('d');
+            if(dataParam) {
+                try {
+                    const decoded = JSON.parse(decodeURIComponent(atob(dataParam)));
+                    if(decoded.p_num) document.getElementById('proc-numero').value = decoded.p_num;
+                    if(decoded.p_data) document.getElementById('proc-data').value = decoded.p_data;
+                    if(decoded.p_int) document.getElementById('proc-interessado').value = decoded.p_int;
+                    updatePreview();
+                } catch(e) {}
+            }
+        });
+    </script>
+</body>
+</html>
