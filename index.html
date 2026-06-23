@@ -12,7 +12,7 @@
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f8fafc;
-            color: #3b0764; /* purple-900 */
+            color: #3b0764;
             -webkit-tap-highlight-color: transparent;
         }
         
@@ -54,50 +54,50 @@
 
         .pdf-content { font-size: 11pt; line-height: 1.5; text-align: justify; }
         .image-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 10px; }
-        .image-preview { width: 100%; height: 120px; object-fit: contain; border: 1px solid #d8b4fe; border-radius: 4px; }
+        .image-preview { width: 100%; height: 300px; object-fit: contain; border: 1px solid #d8b4fe; border-radius: 4px; }
 
         /* ==============================================================
-           REGRAS EXCLUSIVAS PARA IMPRESSÃO / SALVAR PDF (MOBILE NATIVO)
+           REGRAS EXCLUSIVAS PARA IMPRESSÃO (NATIVO/PDF)
            ============================================================== */
         @media print {
-            @page { size: A4 portrait; margin: 0; }
+            @page { size: A4 portrait; margin: 15mm; }
             body { background-color: white !important; }
             
-            /* Esconde todos os elementos da UI */
-            header, nav, .next-tab-btn, #floating-actions, .text-xs.text-center.text-gray-500 { 
-                display: none !important; 
-            }
-            
-            /* Remove margins e paddings do app */
+            header, nav, .next-tab-btn, #floating-actions, .text-xs.text-center.text-gray-500 { display: none !important; }
             main { padding: 0 !important; margin: 0 !important; }
             
-            /* Garante que só o Tab 3 seja impresso, mesmo se estiver em outra aba */
             #tab-1, #tab-2 { display: none !important; }
             #tab-3 { display: block !important; padding: 0 !important; }
             
-            /* Remove a escala mobile do A4 para ele ficar 100% na impressão */
             .preview-container { padding: 0 !important; background: transparent !important; height: auto !important; }
             .a4-page {
                 transform: none !important;
                 box-shadow: none !important;
                 width: 100% !important;
                 margin: 0 !important;
-                padding: 20mm !important; /* Mantém apenas a margem interna do texto (papel timbrado) */
+                padding: 0 !important; 
             }
             
-            /* Força as cores de fundo aparecerem no PDF (bg-gray, textos roxos, etc) */
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            
+            thead { display: table-header-group; }
+            tfoot { display: table-footer-group; }
+            
+            .image-preview, .image-grid { page-break-inside: avoid; break-inside: avoid; }
         }
     </style>
 </head>
 <body class="min-h-screen pb-20">
 
-    <!-- Header -->
+    <!-- Header App -->
     <header class="fixed top-0 w-full bg-purple-800 text-white p-4 shadow-md z-50 flex items-center justify-between">
-        <h1 class="font-bold text-lg leading-tight">Relatório de Vistoria<br><span class="text-xs font-normal text-purple-200">CLU / SEDUR Camaçari</span></h1>
+        <div>
+            <h1 class="font-bold text-lg leading-tight">Relatório de Vistoria - Habite-se || Coordenadoria de Licenciamento Urbanístico (CLU/DIRURB/SEDUR))</h1>
+            <p class="text-[10px] font-medium text-purple-200 mt-0.5 tracking-wide">Aplicação desenvolvida pela Coordenadoria de Planejamento e Projetos (CPP/DIRURB/SEDUR) - 2026</p>
+        </div>
     </header>
 
-    <main class="pt-20 px-4">
+    <main class="pt-24 px-4">
         <form id="vistoria-form">
             <!-- ABA 1: DADOS -->
             <div id="tab-1" class="tab-content active space-y-5 pb-6">
@@ -166,8 +166,8 @@
                         </div>
 
                         <div class="bg-purple-100 p-3 rounded-lg border border-purple-200 mt-2">
-                            <label class="block font-bold text-purple-800 text-sm mb-2 text-center">Capturar Coordenadas</label>
-                            <button type="button" id="btn-gps" class="w-full bg-purple-600 active:bg-purple-800 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 mb-3 shadow">
+                            <label class="block font-bold text-black-800 text-sm mb-2 text-center">Capturar Coordenadas</label>
+                            <button type="button" id="btn-gps" class="w-full bg-orange-600 active:bg-orange-800 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 mb-3 shadow">
                                 Usar Meu GPS Atual
                             </button>
                             <div class="flex gap-2">
@@ -276,13 +276,13 @@
 
                 <div class="flex gap-2">
                     <button type="button" class="w-1/3 py-4 bg-gray-200 text-gray-700 font-bold rounded-xl shadow next-tab-btn" data-target="tab-1">Voltar</button>
-                    <button type="button" class="w-2/3 py-4 bg-purple-600 text-white font-bold rounded-xl shadow-lg next-tab-btn" data-target="tab-3">Ver Relatório ➔</button>
+                    <button type="button" class="w-2/3 py-4 bg-green-600 text-white font-bold rounded-xl shadow-lg next-tab-btn" data-target="tab-3">Ver Relatório ➔</button>
                 </div>
             </div>
 
-            <!-- ABA 3: PREVIEW E GERAÇÃO -->
+            <!-- ABA 3: PREVIEW E GERAÇÃO DO DOCUMENTO (TABELA DE IMPRESSÃO) -->
             <div id="tab-3" class="tab-content space-y-4 pb-6">
-                <!-- Ações Flutuantes (Escondidas na Impressão via CSS) -->
+                <!-- Ações Flutuantes -->
                 <div id="floating-actions" class="grid grid-cols-2 gap-3 mb-4 sticky top-[72px] z-40 bg-[#f8fafc] py-2 border-b border-gray-200">
                     <button type="button" id="btn-gerar-pdf" class="w-full py-3 bg-purple-700 active:bg-purple-900 text-white font-bold rounded-xl shadow flex justify-center items-center gap-2 text-sm">
                         🖨️ Imprimir / PDF
@@ -295,69 +295,102 @@
                 <p class="text-xs text-center text-gray-500 mb-2">Visualização do documento final (WYSIWYG)</p>
                 
                 <div class="preview-container" id="scale-container">
-                    <div id="documento-preview" class="a4-page">
-                        <div class="pdf-content">
-                            <div class="text-center font-bold mb-6 border-b-2 border-black pb-4 text-black text-sm">
-                                <p>ESTADO DA BAHIA</p>
-                                <p>PREFEITURA MUNICIPAL DE CAMAÇARI</p>
-                                <p>SECRETARIA DE DESENVOLVIMENTO URBANO E MEIO AMBIENTE - SEDUR</p>
-                                <p>DIRETORIA DE URBANISMO - DIRURB</p>
-                                <p>COORDENADORIA LICENCIAMENTO URBANÍSTICO - CLU</p>
-                            </div>
+                    <div id="documento-preview" class="a4-page relative">
+                        
+                        <!-- Estrutura de Tabela -->
+                        <table class="w-full text-black">
+                            
+                            <!-- CABEÇALHO REPETITIVO DA IMPRESSÃO -->
+                            <thead>
+                                <tr>
+                                    <td>
+                                        <div class="text-center font-bold mb-4 border-b border-black pb-2 text-[10px] leading-tight text-black">
+                                            <p>ESTADO DA BAHIA</p>
+                                            <p>PREFEITURA MUNICIPAL DE CAMAÇARI</p>
+                                            <p>SECRETARIA DE DESENVOLVIMENTO URBANO E MEIO AMBIENTE - SEDUR</p>
+                                            <p>DIRETORIA DE URBANISMO - DIRURB</p>
+                                            <p>COORDENADORIA LICENCIAMENTO URBANÍSTICO - CLU</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </thead>
 
-                            <h2 class="text-center font-bold text-lg mb-6" style="color: #4c1d95;">RELATÓRIO DE VISTORIA - <span id="prev-data-titulo" class="uppercase">DD/MM/AAAA</span></h2>
+                            <!-- CONTEÚDO PRINCIPAL (COM QUEBRA AUTOMÁTICA) -->
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <div class="pdf-content">
+                                            <h2 class="text-center font-bold text-lg mb-6" style="color: #4c1d95;">RELATÓRIO DE VISTORIA - <span id="prev-data-titulo" class="uppercase">DD/MM/AAAA</span></h2>
 
-                            <div class="mb-5">
-                                <h3 class="font-bold text-sm mb-2" style="color: #6b21a8; border-bottom: 1px solid #d8b4fe;">DADOS DO PROCESSO</h3>
-                                <p><strong>NÚMERO:</strong> <span id="prev-proc">...</span></p>
-                                <p><strong>INTERESSADO(A):</strong> <span id="prev-interessado" class="uppercase">...</span></p>
-                                <p><strong>ASSUNTO:</strong> ALVARÁ DE HABITE-SE</p>
-                                <p><strong>LOCAL:</strong> <span id="prev-local">...</span></p>
-                            </div>
+                                            <div class="mb-5">
+                                                <h3 class="font-bold text-sm mb-2" style="color: #6b21a8; border-bottom: 1px solid #d8b4fe;">DADOS DO PROCESSO</h3>
+                                                <p><strong>NÚMERO:</strong> <span id="prev-proc">...</span></p>
+                                                <p><strong>INTERESSADO(A):</strong> <span id="prev-interessado" class="uppercase">...</span></p>
+                                                <p><strong>ASSUNTO:</strong> ALVARÁ DE HABITE-SE</p>
+                                                <p><strong>LOCAL:</strong> <span id="prev-local">...</span></p>
+                                            </div>
 
-                            <div class="mb-5">
-                                <h3 class="font-bold text-sm mb-2" style="color: #6b21a8; border-bottom: 1px solid #d8b4fe;">1. OBJETIVO</h3>
-                                <p>
-                                    Vistoriar edificação <span id="prev-uso-texto" class="lowercase font-bold">...</span>, localizada no endereço supracitado, para verificar a situação da obra, com a finalidade de obter o Alvará de Habite-se. 
-                                    A edificação possui Alvará de Construção nº <span id="prev-alv-num" class="font-bold">...</span>, emitido em <span id="prev-alv-data" class="font-bold">...</span>. 
-                                    A edificação se encontra localizada na <span id="prev-macrozona" class="font-bold">...</span>, na zona <span id="prev-zona" class="font-bold">...</span> <span id="prev-zona-extenso" class="font-bold"></span>. 
-                                    Coordenadas UTM: E: <span id="prev-coord-e">...</span>, N: <span id="prev-coord-n">...</span>.
-                                </p>
-                            </div>
+                                            <div class="mb-5">
+                                                <h3 class="font-bold text-sm mb-2" style="color: #6b21a8; border-bottom: 1px solid #d8b4fe;">1. OBJETIVO</h3>
+                                                <p>
+                                                    Vistoriar edificação <span id="prev-uso-texto" class="lowercase font-bold">...</span>, localizada no endereço supracitado, para verificar a situação da obra, com a finalidade de obter o Alvará de Habite-se. 
+                                                    A edificação possui Alvará de Construção nº <span id="prev-alv-num" class="font-bold">...</span>, emitido em <span id="prev-alv-data" class="font-bold">...</span>. 
+                                                    A edificação se encontra localizada na <span id="prev-macrozona" class="font-bold">...</span>, na zona <span id="prev-zona" class="font-bold">...</span> <span id="prev-zona-extenso" class="font-bold"></span>. 
+                                                    Coordenadas UTM: E: <span id="prev-coord-e">...</span>, N: <span id="prev-coord-n">...</span>.
+                                                </p>
+                                            </div>
 
-                            <div class="mb-5">
-                                <h3 class="font-bold text-sm mb-2" style="color: #6b21a8; border-bottom: 1px solid #d8b4fe;">2. SITUAÇÃO EXISTENTE</h3>
-                                <p>Conforme vistoria, identificou-se que a obra se encontra concluída com as informações abaixo (Recuos Apurados):</p>
-                                <p class="mt-2 font-bold text-center bg-gray-100 p-2 border border-gray-300 text-sm">
-                                    Frontal: <span id="prev-rf">0.00</span>m | Lat. Dir: <span id="prev-rld">0.00</span>m | Lat. Esq: <span id="prev-rle">0.00</span>m | Fundo: <span id="prev-rfd">0.00</span>m
-                                </p>
-                            </div>
+                                            <div class="mb-5">
+                                                <h3 class="font-bold text-sm mb-2" style="color: #6b21a8; border-bottom: 1px solid #d8b4fe;">2. SITUAÇÃO EXISTENTE</h3>
+                                                <p>Conforme vistoria, identificou-se que a obra se encontra concluída com as informações abaixo (Recuos Apurados):</p>
+                                                <p class="mt-2 font-bold text-center bg-gray-100 p-2 border border-gray-300 text-sm">
+                                                    Frontal: <span id="prev-rf">0.00</span>m | Lat. Dir: <span id="prev-rld">0.00</span>m | Lat. Esq: <span id="prev-rle">0.00</span>m | Fundo: <span id="prev-rfd">0.00</span>m
+                                                </p>
+                                            </div>
 
-                            <div class="mb-5">
-                                <h3 class="font-bold text-sm mb-2" style="color: #6b21a8; border-bottom: 1px solid #d8b4fe;">3. CONCLUSÃO</h3>
-                                <p>
-                                    Após a vistoria realizada em <span id="prev-data-conclusao">DD/MM/AAAA</span> e a análise das informações, informamos que a obra <strong id="prev-status-texto" class="uppercase">...</strong> aos parâmetros estabelecidos.
-                                </p>
-                                <div id="prev-pendencias-bloco" class="hidden mt-2">
-                                    <p class="mb-1 text-sm font-semibold">Necessidade de apresentar documentos complementares:</p>
-                                    <ul id="prev-pendencias-lista" class="list-disc list-inside pl-2 text-sm font-bold" style="color: #4c1d95;"></ul>
-                                </div>
-                            </div>
+                                            <div class="mb-5">
+                                                <h3 class="font-bold text-sm mb-2" style="color: #6b21a8; border-bottom: 1px solid #d8b4fe;">3. CONCLUSÃO</h3>
+                                                <p>
+                                                    Após a vistoria realizada em <span id="prev-data-conclusao">DD/MM/AAAA</span> e a análise das informações, informamos que a obra <strong id="prev-status-texto" class="uppercase">...</strong> aos parâmetros estabelecidos.
+                                                </p>
+                                                <div id="prev-pendencias-bloco" class="hidden mt-2">
+                                                    <p class="mb-1 text-sm font-semibold">Necessidade de apresentar documentos complementares:</p>
+                                                    <ul id="prev-pendencias-lista" class="list-disc list-inside pl-2 text-sm font-bold" style="color: #4c1d95;"></ul>
+                                                </div>
+                                            </div>
 
-                            <div class="mb-5">
-                                <h3 class="font-bold text-sm mb-2" style="color: #6b21a8; border-bottom: 1px solid #d8b4fe;">4. FOTOS DA VISTORIA</h3>
-                                <div id="prev-fotos" class="image-grid"></div>
-                                <p id="prev-nofotos" class="text-sm italic text-gray-500">Nenhuma foto anexada.</p>
-                            </div>
+                                            <div class="mb-5">
+                                                <h3 class="font-bold text-sm mb-2" style="color: #6b21a8; border-bottom: 1px solid #d8b4fe;">4. FOTOS DA VISTORIA</h3>
+                                                <div id="prev-fotos" class="image-grid"></div>
+                                                <p id="prev-nofotos" class="text-sm italic text-gray-500">Nenhuma foto anexada.</p>
+                                            </div>
 
-                            <div class="mt-12 text-center text-sm">
-                                <p>Camaçari, <span id="prev-data-extenso">DD de Mês de AAAA</span></p>
-                                <p class="mt-8 font-bold border-t border-black inline-block pt-2 px-6">
-                                    <span id="prev-analista-nome" class="uppercase">NOME DO ANALISTA</span><br>
-                                    <span class="font-normal text-xs">Matrícula: <span id="prev-analista-mat">...</span> / CLU</span>
-                                </p>
-                            </div>
-                        </div>
+                                            <div class="mt-12 mb-8 text-center text-sm">
+                                                <p>Camaçari, <span id="prev-data-extenso">DD de Mês de AAAA</span></p>
+                                                <p class="mt-12 font-bold border-t border-black inline-block pt-2 px-6">
+                                                    <span id="prev-analista-nome" class="uppercase">NOME DO ANALISTA</span><br>
+                                                    <span class="font-normal text-xs">Matrícula: <span id="prev-analista-mat">...</span> / CLU</span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+
+                            <!-- RODAPÉ REPETITIVO DA IMPRESSÃO -->
+                            <tfoot>
+                                <tr>
+                                    <td>
+                                        <div class="mt-6 text-center text-[10px] font-bold border-t border-gray-400 pt-2 leading-tight" style="color: #0a0a0a;">
+                                            <p>SECRETARIA DE DESENVOLVIMENTO URBANO E MEIO AMBIENTE – SEDUR</p>
+                                            <p>DIRETORIA DE URBANISMO - DIRURB</p>
+                                            <p>COORDENADORIA LICENCIAMENTO URBANÍSTICO – CLU</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tfoot>
+
+                        </table>
                     </div>
                 </div>
             </div>
@@ -365,61 +398,17 @@
     </main>
 
     <!-- Bottom Nav -->
-    <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 flex justify-between z-50 pb-safe">
-        <button class="nav-btn active flex-1 py-3 font-semibold text-xs" data-target="tab-1">1. Dados</button>
-        <button class="nav-btn flex-1 py-3 font-semibold text-xs border-l border-gray-100" data-target="tab-2">2. Vistoria</button>
-        <button class="nav-btn flex-1 py-3 font-semibold text-xs border-l border-gray-100" data-target="tab-3">3. Relatório</button>
+    <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 flex justify-between z-50 pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+        <button class="nav-btn active flex-1 py-3 font-semibold text-xs transition-colors" data-target="tab-1">1. Dados</button>
+        <button class="nav-btn flex-1 py-3 font-semibold text-xs border-l border-gray-100 transition-colors" data-target="tab-2">2. Vistoria</button>
+        <button class="nav-btn flex-1 py-3 font-semibold text-xs border-l border-gray-100 transition-colors" data-target="tab-3">3. Relatório</button>
     </nav>
 
     <script>
-        // Lógica de Abas
-        const navBtns = document.querySelectorAll('.nav-btn, .next-tab-btn');
-        const tabContents = document.querySelectorAll('.tab-content');
-
-        function switchTab(targetId) {
-            tabContents.forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(targetId).classList.add('active');
-            
-            const activeNavBtn = document.querySelector(`.nav-btn[data-target="${targetId}"]`);
-            if(activeNavBtn) activeNavBtn.classList.add('active');
-
-            if(targetId === 'tab-3') {
-                updatePreview();
-                adjustScale();
-            }
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        navBtns.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const targetId = e.currentTarget.getAttribute('data-target');
-                if(targetId) switchTab(targetId);
-            });
-        });
-
-        // Escala
-        function adjustScale() {
-            const container = document.getElementById('scale-container');
-            const page = document.getElementById('documento-preview');
-            const containerWidth = container.clientWidth - 32;
-            const a4WidthPx = 794; 
-            
-            let scale = containerWidth / a4WidthPx;
-            if(scale > 1) scale = 1;
-
-            page.style.transform = `scale(${scale})`;
-            container.style.height = `${(1122 * scale) + 40}px`;
-        }
-
-        window.addEventListener('resize', () => {
-            if(document.getElementById('tab-3').classList.contains('active')) adjustScale();
-        });
-
+        // Configurações Globais Iniciais
         proj4.defs("EPSG:4326", "+proj=longlat +datum=WGS84 +no_defs");
         proj4.defs("EPSG:32724", "+proj=utm +zone=24 +south +datum=WGS84 +units=m +no_defs");
 
-        // Base de Dados Urbanísticos (COMPLETA DO ARQUIVO ORIGINAL)
         const urbanData = [
             { "ZONA": "ZDC 1", "USOS": "UNIRESIDENCIAL", "RECUO FRENTE (m)": "6,00", "RECUO LATERAL (m)": "3,00", "RECUO FUNDO (m)": "5,00" },
             { "ZONA": "ZDC 1", "USOS": "PLURIRESIDENCIAL", "RECUO FRENTE (m)": "6,00", "RECUO LATERAL (m)": "3,00", "RECUO FUNDO (m)": "5,00" },
@@ -442,7 +431,6 @@
 
         let selectedUrbanData = null;
 
-        // Tradução Extenso (Original)
         function getZonaExtenso(zonaStr) {
             if (!zonaStr) return "";
             if (zonaStr.startsWith("ZOUC")) return "(Zona Urbana Consolidada)";
@@ -463,6 +451,7 @@
             const [y, m, d] = dataIso.split('-');
             return `${d}/${m}/${y}`;
         }
+
         function formatDataExtenso(dataIso) {
             if(!dataIso) return "DD de Mês de AAAA";
             const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -470,127 +459,12 @@
             return `${d} de ${meses[parseInt(m)-1]} de ${y}`;
         }
 
+        // Tudo que interage com o DOM deve estar aqui dentro
         document.addEventListener('DOMContentLoaded', () => {
-            const macrozonaSelect = document.getElementById('macrozona-select');
-            const zoneSelect = document.getElementById('zone-select');
-            const useSelect = document.getElementById('use-select');
-            const form = document.getElementById('vistoria-form');
-            const imageInput = document.getElementById('foto-upload');
-            
-            // Popula Zonas (Lista Completa do Original)
-            const todasAsZonas = ["ZDC 1", "ZDC 2", "ZDC 3", "ZDC 4", "ZDC 5", "ZOC 1", "ZOC 2", "ZOC 3", "ZOC 4", "ZE 1", "ZE 2", "ZE 3", "ZOUC 1", "ZOUC 2", "ZAICS 1", "ZAICS 2", "ZUE 1", "ZUE 2", "ZUE 3", "ZUE 4", "ZONA RURAL", "ZEIS 1", "ZEIS 2", "ZEIS 3", "ZEIS 4", "ZEIS 5", "CeLin 1 - BA099 - ESTRADA DO COCO", "CeLin 2 - VIA METROPOLITANA"];
-            todasAsZonas.forEach(z => zoneSelect.add(new Option(z, z)));
 
-            const usosComuns = ["UNIRESIDENCIAL", "PLURIRESIDENCIAL", "COMÉRCIO, SERVIÇO, INSTITUCIONAL", "INDUSTRIAL", "EMPREENDIMENTO TURÍSTICO"];
-
-            zoneSelect.addEventListener('change', (e) => {
-                useSelect.innerHTML = '<option value="">-- Selecione o Uso --</option>';
-                if (e.target.value) {
-                    usosComuns.forEach(u => useSelect.add(new Option(u, u)));
-                    useSelect.disabled = false;
-                    useSelect.classList.remove('bg-gray-100', 'text-gray-500');
-                    useSelect.classList.add('bg-purple-50', 'text-purple-900');
-                } else {
-                    useSelect.disabled = true;
-                    useSelect.classList.add('bg-gray-100', 'text-gray-500');
-                }
-                updatePreview();
-            });
-
-            useSelect.addEventListener('change', () => {
-                const z = zoneSelect.value;
-                const u = useSelect.value;
-                selectedUrbanData = urbanData.find(item => item.ZONA === z && item.USOS === u);
-                updatePreview();
-            });
-
-            // GPS e Maps
-            document.getElementById('btn-gps').addEventListener('click', () => {
-                const msgEl = document.getElementById('msg-coord');
-                msgEl.classList.remove('hidden');
-                msgEl.textContent = "Aguarde, obtendo GPS...";
-                msgEl.className = "text-xs font-semibold text-center mt-2 text-yellow-600";
-                
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition((position) => {
-                        converterEPreencher(position.coords.latitude, position.coords.longitude, msgEl);
-                    }, () => {
-                        msgEl.textContent = "Erro: Permissão negada ou GPS inativo.";
-                        msgEl.className = "text-xs font-semibold text-center mt-2 text-red-600";
-                    }, { enableHighAccuracy: true });
-                }
-            });
-
-            document.getElementById('btn-converter-maps').addEventListener('click', () => {
-                const inputVal = document.getElementById('input-maps').value;
-                const msgEl = document.getElementById('msg-coord');
-                msgEl.classList.remove('hidden');
-                const match = inputVal.match(/(-?\d+\.\d+)[\s,]+(-?\d+\.\d+)/);
-
-                if (match) {
-                    converterEPreencher(parseFloat(match[1]), parseFloat(match[2]), msgEl);
-                } else {
-                    msgEl.textContent = "Formato inválido. Cole Lat/Lon.";
-                    msgEl.className = "text-xs font-semibold text-center mt-2 text-red-600";
-                }
-            });
-
-            function converterEPreencher(lat, lon, msgEl) {
-                try {
-                    const coordsUtm = proj4("EPSG:4326", "EPSG:32724", [lon, lat]);
-                    document.getElementById('coord-e').value = coordsUtm[0].toFixed(2);
-                    document.getElementById('coord-n').value = coordsUtm[1].toFixed(2);
-                    msgEl.textContent = `Lat ${lat.toFixed(4)}, Lon ${lon.toFixed(4)}`;
-                    msgEl.className = "text-[10px] font-semibold text-center mt-2 text-green-700 bg-green-100 p-1 rounded";
-                    updatePreview();
-                } catch(e) {
-                    msgEl.textContent = "Erro matemático na conversão.";
-                }
-            }
-
-            document.getElementById('check-docs-comp').addEventListener('change', (e) => {
-                document.getElementById('pendencias-container').classList.toggle('hidden', !e.target.checked);
-                updatePreview();
-            });
-
-            document.getElementById('check-outros').addEventListener('change', (e) => {
-                document.getElementById('outras-pendencias').classList.toggle('hidden', !e.target.checked);
-                updatePreview();
-            });
-
-            // Upload Fotos
-            imageInput.addEventListener('change', (e) => {
-                const files = Array.from(e.target.files).slice(0, 4);
-                const container = document.getElementById('prev-fotos');
-                const msg = document.getElementById('prev-nofotos');
-                const countMsg = document.getElementById('foto-count');
-                
-                container.innerHTML = '';
-                if(files.length > 0) {
-                    msg.classList.add('hidden');
-                    countMsg.textContent = `${files.length} foto(s) anexada(s)`;
-                    countMsg.classList.add('text-green-600', 'font-bold');
-                } else {
-                    msg.classList.remove('hidden');
-                    countMsg.textContent = `Nenhuma foto selecionada`;
-                    countMsg.classList.remove('text-green-600', 'font-bold');
-                }
-
-                files.forEach(file => {
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        const img = document.createElement('img');
-                        img.src = event.target.result;
-                        img.className = 'image-preview';
-                        container.appendChild(img);
-                    };
-                    reader.readAsDataURL(file);
-                });
-            });
-
-            form.addEventListener('input', updatePreview);
-
-            // Validação de Recuos ajustada para tratar textos (ex: "10m após a faixa")
+            // -----------------------------------------------------
+            // LÓGICA DE UPDATE PREVIEW E VALIDAÇÃO
+            // -----------------------------------------------------
             function validarRecuo(idInput, idReq, valReqStr) {
                 const elInput = document.getElementById(idInput);
                 const elReq = document.getElementById(idReq);
@@ -604,7 +478,6 @@
                 const valReqNumerico = parseFloat(valReqStr.replace(',', '.'));
 
                 if(isNaN(valReqNumerico)) {
-                    // É um texto, não dá pra validar com menor/maior
                     elReq.innerHTML = `Exigido: ${valReqStr}`;
                     elReq.className = "text-[10px] font-bold text-blue-600 block mt-1 text-center";
                     elInput.className = "w-full p-2 border border-blue-400 rounded bg-blue-50 text-blue-900 outline-none font-bold text-center";
@@ -686,13 +559,179 @@
                 });
             }
 
-            // NOVA FORMA DE IMPRESSÃO (Nativa do Sistema Operacional - Perfeita para Mobile)
+            // -----------------------------------------------------
+            // LÓGICA DE ABAS E NAVEGAÇÃO
+            // -----------------------------------------------------
+            const navBtns = document.querySelectorAll('.nav-btn, .next-tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            function adjustScale() {
+                const container = document.getElementById('scale-container');
+                const page = document.getElementById('documento-preview');
+                if (!container || !page) return;
+
+                const containerWidth = container.clientWidth - 32;
+                const a4WidthPx = 794; 
+                
+                let scale = containerWidth / a4WidthPx;
+                if(scale > 1) scale = 1;
+
+                page.style.transform = `scale(${scale})`;
+                container.style.height = `${(page.offsetHeight * scale)}px`;
+            }
+
+            function switchTab(targetId) {
+                tabContents.forEach(tab => tab.classList.remove('active'));
+                document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+                document.getElementById(targetId).classList.add('active');
+                
+                const activeNavBtn = document.querySelector(`.nav-btn[data-target="${targetId}"]`);
+                if(activeNavBtn) activeNavBtn.classList.add('active');
+
+                if(targetId === 'tab-3') {
+                    updatePreview();
+                    // Pequeno delay para garantir que os elementos estejam visíveis no DOM antes de medir a altura
+                    setTimeout(adjustScale, 50); 
+                }
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+
+            navBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const targetId = e.currentTarget.getAttribute('data-target');
+                    if(targetId) switchTab(targetId);
+                });
+            });
+
+            window.addEventListener('resize', () => {
+                if(document.getElementById('tab-3').classList.contains('active')) adjustScale();
+            });
+
+            // -----------------------------------------------------
+            // LÓGICA GERAL DE FORMULÁRIO E EVENTOS
+            // -----------------------------------------------------
+            const macrozonaSelect = document.getElementById('macrozona-select');
+            const zoneSelect = document.getElementById('zone-select');
+            const useSelect = document.getElementById('use-select');
+            const form = document.getElementById('vistoria-form');
+            const imageInput = document.getElementById('foto-upload');
+            
+            const todasAsZonas = ["ZDC 1", "ZDC 2", "ZDC 3", "ZDC 4", "ZDC 5", "ZOC 1", "ZOC 2", "ZOC 3", "ZOC 4", "ZE 1", "ZE 2", "ZE 3", "ZOUC 1", "ZOUC 2", "ZAICS 1", "ZAICS 2", "ZUE 1", "ZUE 2", "ZUE 3", "ZUE 4", "ZONA RURAL", "ZEIS 1", "ZEIS 2", "ZEIS 3", "ZEIS 4", "ZEIS 5", "CeLin 1 - BA099 - ESTRADA DO COCO", "CeLin 2 - VIA METROPOLITANA"];
+            todasAsZonas.forEach(z => zoneSelect.add(new Option(z, z)));
+
+            const usosComuns = ["UNIRESIDENCIAL", "PLURIRESIDENCIAL", "COMÉRCIO, SERVIÇO, INSTITUCIONAL", "INDUSTRIAL", "EMPREENDIMENTO TURÍSTICO"];
+
+            zoneSelect.addEventListener('change', (e) => {
+                useSelect.innerHTML = '<option value="">-- Selecione o Uso --</option>';
+                if (e.target.value) {
+                    usosComuns.forEach(u => useSelect.add(new Option(u, u)));
+                    useSelect.disabled = false;
+                    useSelect.classList.remove('bg-gray-100', 'text-gray-500');
+                    useSelect.classList.add('bg-purple-50', 'text-purple-900');
+                } else {
+                    useSelect.disabled = true;
+                    useSelect.classList.add('bg-gray-100', 'text-gray-500');
+                }
+                updatePreview();
+            });
+
+            useSelect.addEventListener('change', () => {
+                const z = zoneSelect.value;
+                const u = useSelect.value;
+                selectedUrbanData = urbanData.find(item => item.ZONA === z && item.USOS === u);
+                updatePreview();
+            });
+
+            document.getElementById('btn-gps').addEventListener('click', () => {
+                const msgEl = document.getElementById('msg-coord');
+                msgEl.classList.remove('hidden');
+                msgEl.textContent = "Aguarde, obtendo GPS...";
+                msgEl.className = "text-xs font-semibold text-center mt-2 text-yellow-600";
+                
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition((position) => {
+                        converterEPreencher(position.coords.latitude, position.coords.longitude, msgEl);
+                    }, () => {
+                        msgEl.textContent = "Erro: Permissão negada ou GPS inativo.";
+                        msgEl.className = "text-xs font-semibold text-center mt-2 text-red-600";
+                    }, { enableHighAccuracy: true });
+                }
+            });
+
+            document.getElementById('btn-converter-maps').addEventListener('click', () => {
+                const inputVal = document.getElementById('input-maps').value;
+                const msgEl = document.getElementById('msg-coord');
+                msgEl.classList.remove('hidden');
+                const match = inputVal.match(/(-?\d+\.\d+)[\s,]+(-?\d+\.\d+)/);
+
+                if (match) {
+                    converterEPreencher(parseFloat(match[1]), parseFloat(match[2]), msgEl);
+                } else {
+                    msgEl.textContent = "Formato inválido. Cole Lat/Lon.";
+                    msgEl.className = "text-xs font-semibold text-center mt-2 text-red-600";
+                }
+            });
+
+            function converterEPreencher(lat, lon, msgEl) {
+                try {
+                    const coordsUtm = proj4("EPSG:4326", "EPSG:32724", [lon, lat]);
+                    document.getElementById('coord-e').value = coordsUtm[0].toFixed(2);
+                    document.getElementById('coord-n').value = coordsUtm[1].toFixed(2);
+                    msgEl.textContent = `Lat ${lat.toFixed(4)}, Lon ${lon.toFixed(4)}`;
+                    msgEl.className = "text-[10px] font-semibold text-center mt-2 text-green-700 bg-green-100 p-1 rounded";
+                    updatePreview();
+                } catch(e) {
+                    msgEl.textContent = "Erro matemático na conversão.";
+                }
+            }
+
+            document.getElementById('check-docs-comp').addEventListener('change', (e) => {
+                document.getElementById('pendencias-container').classList.toggle('hidden', !e.target.checked);
+                updatePreview();
+            });
+
+            document.getElementById('check-outros').addEventListener('change', (e) => {
+                document.getElementById('outras-pendencias').classList.toggle('hidden', !e.target.checked);
+                updatePreview();
+            });
+
+            imageInput.addEventListener('change', (e) => {
+                const files = Array.from(e.target.files).slice(0, 4);
+                const container = document.getElementById('prev-fotos');
+                const msg = document.getElementById('prev-nofotos');
+                const countMsg = document.getElementById('foto-count');
+                
+                container.innerHTML = '';
+                if(files.length > 0) {
+                    msg.classList.add('hidden');
+                    countMsg.textContent = `${files.length} foto(s) anexada(s)`;
+                    countMsg.classList.add('text-green-600', 'font-bold');
+                } else {
+                    msg.classList.remove('hidden');
+                    countMsg.textContent = `Nenhuma foto selecionada`;
+                    countMsg.classList.remove('text-green-600', 'font-bold');
+                }
+
+                files.forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const img = document.createElement('img');
+                        img.src = event.target.result;
+                        img.className = 'image-preview';
+                        container.appendChild(img);
+                        
+                        img.onload = () => { if(document.getElementById('tab-3').classList.contains('active')) adjustScale(); };
+                    };
+                    reader.readAsDataURL(file);
+                });
+            });
+
+            form.addEventListener('input', updatePreview);
+
             document.getElementById('btn-gerar-pdf').addEventListener('click', () => {
-                // A magia acontece no CSS @media print
                 window.print();
             });
 
-            // Compartilhar Nativo
             document.getElementById('btn-link').addEventListener('click', async () => {
                 const state = {
                     p_num: document.getElementById('proc-numero').value,
@@ -714,7 +753,6 @@
                 }
             });
 
-            // Load inicial de Dados
             const dataParam = new URLSearchParams(window.location.search).get('d');
             if(dataParam) {
                 try {
